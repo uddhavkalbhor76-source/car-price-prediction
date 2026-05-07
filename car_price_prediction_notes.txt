@@ -1,0 +1,328 @@
+============================================================
+   CAR PRICE PREDICTION - CODE EXPLANATION NOTES
+   File: car_price_prediction5.py
+   Platform: Google Colab
+============================================================
+
+--------------------------------------------------------------
+STEP 1 - IMPORT LIBRARIES
+--------------------------------------------------------------
+Code:
+  import pandas as pd
+  import matplotlib.pyplot as plt
+  import seaborn as sns
+  from sklearn.preprocessing import LabelEncoder
+
+Explanation:
+  pandas     → Load and manipulate the dataset
+  matplotlib → Plot graphs and charts
+  seaborn    → Draw advanced visualizations (heatmap)
+  LabelEncoder → Convert text/categorical data into numbers
+
+--------------------------------------------------------------
+STEP 2 - LOAD DATASET
+--------------------------------------------------------------
+Code:
+  dataset = pd.read_csv('/content/car_data_formatted.csv')
+
+Explanation:
+  Reads the formatted CSV file from Google Colab's /content/ folder
+  and stores it in a pandas DataFrame called 'dataset'
+
+--------------------------------------------------------------
+STEP 3 - PREVIEW DATA
+--------------------------------------------------------------
+Code:
+  dataset.head(2)
+
+Explanation:
+  Shows the first 2 rows of the dataset to quickly check
+  if the data loaded correctly
+
+--------------------------------------------------------------
+STEP 4 - CHECK NULL VALUES
+--------------------------------------------------------------
+Code:
+  dataset.isnull().sum()
+
+Explanation:
+  Counts missing/null values in each column.
+  If any column has nulls, we need to handle them before modeling.
+  (This dataset has 0 null values)
+
+--------------------------------------------------------------
+STEP 5 - DATASET INFO
+--------------------------------------------------------------
+Code:
+  dataset.info()
+
+Explanation:
+  Shows:
+  - Column names
+  - Data types (int, float, object)
+  - Non-null counts
+  Helps identify which columns are text (need encoding)
+
+--------------------------------------------------------------
+STEP 6 - ENCODE Car_Name COLUMN
+--------------------------------------------------------------
+Code:
+  Car_Name_le = LabelEncoder()
+  dataset['Car_Name'] = Car_Name_le.fit_transform(dataset["Car_Name"])
+
+Explanation:
+  Machine Learning models only work with numbers, not text.
+  LabelEncoder converts each unique car name to a unique number.
+  Example: 'ritz' → 45, 'swift' → 60, etc.
+
+--------------------------------------------------------------
+STEP 7 - CHECK UNIQUE VALUES IN Fuel_Type
+--------------------------------------------------------------
+Code:
+  dataset['Fuel_Type'].unique()
+
+Explanation:
+  Shows all unique categories in Fuel_Type column.
+  Output: ['Petrol', 'Diesel', 'CNG']
+
+--------------------------------------------------------------
+STEP 8 - ENCODE Fuel_Type COLUMN
+--------------------------------------------------------------
+Code:
+  Fuel_Type_le = LabelEncoder()
+  dataset['Fuel_Type'] = Car_Name_le.fit_transform(dataset["Fuel_Type"])
+
+Explanation:
+  Converts Fuel_Type text to numbers.
+  Example: CNG→0, Diesel→1, Petrol→2
+
+NOTE: There is a bug here in the original code!
+  'Car_Name_le' is used instead of 'Fuel_Type_le'
+  Correct code should be:
+  dataset['Fuel_Type'] = Fuel_Type_le.fit_transform(dataset["Fuel_Type"])
+
+--------------------------------------------------------------
+STEP 9 - ENCODE Seller_Type COLUMN
+--------------------------------------------------------------
+Code:
+  sellar_type_le = LabelEncoder()
+  dataset['Seller_Type'] = sellar_type_le.fit_transform(dataset["Seller_Type"])
+
+Explanation:
+  Converts Seller_Type text to numbers.
+  Example: Dealer→0, Individual→1
+
+--------------------------------------------------------------
+STEP 10 - ENCODE Transmission COLUMN
+--------------------------------------------------------------
+Code:
+  Transmission_le = LabelEncoder()
+  dataset['Transmission'] = Transmission_le.fit_transform(dataset["Transmission"])
+
+Explanation:
+  Converts Transmission text to numbers.
+  Example: Automatic→0, Manual→1
+
+--------------------------------------------------------------
+STEP 11 - PREVIEW ENCODED DATA
+--------------------------------------------------------------
+Code:
+  dataset.head(3)
+
+Explanation:
+  Shows first 3 rows after all encoding is done.
+  All columns should now contain numbers only.
+
+--------------------------------------------------------------
+STEP 12 - CORRELATION HEATMAP
+--------------------------------------------------------------
+Code:
+  sns.heatmap(data=dataset.corr(), annot=True)
+  plt.show()
+
+Explanation:
+  Draws a color-coded matrix showing how much each feature
+  is correlated with every other feature.
+  - Value close to 1.0  → Strong positive correlation
+  - Value close to -1.0 → Strong negative correlation
+  - Value close to 0    → No correlation
+
+  Key insight: Present_Price has highest correlation with Selling_Price
+
+--------------------------------------------------------------
+STEP 13 - SPLIT INPUT AND OUTPUT
+--------------------------------------------------------------
+Code:
+  input_data  = dataset.iloc[:,:-1]
+  output_data = dataset["Selling_Price"]
+
+Explanation:
+  input_data  → All columns EXCEPT the last one (features / X)
+  output_data → Only 'Selling_Price' column (target / y)
+
+  iloc[:,:-1] means: all rows, all columns except last
+
+--------------------------------------------------------------
+STEP 14 - STANDARD SCALING
+--------------------------------------------------------------
+Code:
+  from sklearn.preprocessing import StandardScaler
+  ss = StandardScaler()
+  input_data = pd.DataFrame(ss.fit_transform(input_data), columns=input_data.columns)
+
+Explanation:
+  Different columns have very different ranges:
+    Year       → 2003 to 2018
+    Kms_Driven → 500 to 500000
+    Price      → 0.1 to 92
+
+  StandardScaler brings ALL columns to the same scale
+  (mean=0, std=1) so no single column dominates the model.
+
+  Formula: z = (x - mean) / standard_deviation
+
+--------------------------------------------------------------
+STEP 15 - TRAIN TEST SPLIT
+--------------------------------------------------------------
+Code:
+  from sklearn.model_selection import train_test_split
+  x_train, x_test, y_train, y_test = train_test_split(
+      input_data, output_data, test_size=0.2, random_state=42)
+
+Explanation:
+  Splits dataset into:
+    Training set → 80% (model learns from this)
+    Testing set  → 20% (model is evaluated on this)
+
+  test_size=0.2   → 20% goes to test
+  random_state=42 → Ensures same split every time (reproducible)
+
+  With 301 rows:
+    Training → ~240 rows
+    Testing  → ~61 rows
+
+--------------------------------------------------------------
+STEP 16 - IMPORT ML MODELS
+--------------------------------------------------------------
+Code:
+  from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet
+  from sklearn.tree import DecisionTreeRegressor
+  from sklearn.svm import SVR
+  from sklearn.neighbors import KNeighborsRegressor
+  from sklearn.ensemble import RandomForestRegressor
+
+Explanation:
+  Imports multiple regression models to compare:
+
+  LinearRegression  → Basic straight-line model
+  Lasso             → Linear + removes unimportant features (L1)
+  Ridge             → Linear + penalizes large coefficients (L2)
+  ElasticNet        → Combination of Lasso and Ridge
+  DecisionTreeRegressor → Tree-based model, learns rules
+  SVR               → Support Vector Regression
+  KNeighborsRegressor   → Predicts based on nearby data points
+  RandomForestRegressor → Many trees combined (best accuracy)
+
+--------------------------------------------------------------
+STEP 17 - TRAIN LINEAR REGRESSION
+--------------------------------------------------------------
+Code:
+  lr = LinearRegression()
+  lr.fit(x_train, y_train)
+
+Explanation:
+  Creates a LinearRegression model object
+  .fit() trains the model using training data
+  The model learns the relationship between features and price
+
+--------------------------------------------------------------
+STEP 18 - EVALUATE LINEAR REGRESSION
+--------------------------------------------------------------
+Code:
+  lr.score(x_train, y_train)*100, lr.score(x_test,y_test)*100
+
+Explanation:
+  .score() returns the R² (R-squared) value
+  Multiplied by 100 to show as percentage
+
+  R² Score means:
+    100% → Perfect prediction
+    85%  → Model explains 85% of price variation
+    <60% → Poor model
+
+  Two scores are returned:
+    First  → Training accuracy (how well it learned)
+    Second → Testing accuracy (how well it generalizes)
+
+  If Training >> Testing → Overfitting problem
+
+--------------------------------------------------------------
+ENCODING REFERENCE TABLE
+--------------------------------------------------------------
+
+Fuel_Type:
+  CNG     → 0
+  Diesel  → 1
+  Petrol  → 2
+
+Seller_Type:
+  Dealer     → 0
+  Individual → 1
+
+Transmission:
+  Automatic → 0
+  Manual    → 1
+
+Owner:
+  0 → First owner
+  1 → Second owner
+  2 → Third+ owner
+
+--------------------------------------------------------------
+MODELS TO TRY NEXT (from the imports)
+--------------------------------------------------------------
+
+After Linear Regression, try these in same way:
+
+  lasso = Lasso()
+  lasso.fit(x_train, y_train)
+  lasso.score(x_train, y_train)*100, lasso.score(x_test, y_test)*100
+
+  ridge = Ridge()
+  ridge.fit(x_train, y_train)
+  ridge.score(x_train, y_train)*100, ridge.score(x_test, y_test)*100
+
+  rf = RandomForestRegressor(n_estimators=100, random_state=42)
+  rf.fit(x_train, y_train)
+  rf.score(x_train, y_train)*100, rf.score(x_test, y_test)*100
+
+  → Random Forest will give the highest accuracy (~95%+)
+
+--------------------------------------------------------------
+BUG FOUND IN ORIGINAL CODE
+--------------------------------------------------------------
+Line in original file:
+  dataset['Fuel_Type'] = Car_Name_le.fit_transform(dataset["Fuel_Type"])
+
+Problem:
+  'Car_Name_le' encoder is reused for Fuel_Type
+  Should be 'Fuel_Type_le' instead
+
+Fix:
+  dataset['Fuel_Type'] = Fuel_Type_le.fit_transform(dataset["Fuel_Type"])
+
+--------------------------------------------------------------
+HOW TO RUN IN GOOGLE COLAB
+--------------------------------------------------------------
+1. Go to https://colab.research.google.com
+2. Upload car_data_formatted.csv to /content/
+3. Upload car_price_prediction5.py OR paste code in cells
+4. Run each cell top to bottom (Shift + Enter)
+
+To install any missing library:
+  !pip install pandas scikit-learn seaborn matplotlib
+
+============================================================
+  Notes created for: car_price_prediction5.py
+  Dataset: car_data_formatted.csv (301 rows, 9 columns)
+============================================================

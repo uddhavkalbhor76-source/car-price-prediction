@@ -1,0 +1,36 @@
+Step_No,Step_Name,Code,Description
+1,Import Libraries,"import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import LabelEncoder","Import all required libraries for data handling, visualization and encoding"
+2,Load Dataset,"dataset = pd.read_csv('/content/car_data_formatted.csv')","Read the CSV file into a pandas DataFrame"
+3,Preview Data,"dataset.head(2)","Show first 2 rows of the dataset"
+4,Check Null Values,"dataset.isnull().sum()","Check for missing/null values in each column"
+5,Dataset Info,"dataset.info()","Get data types and non-null counts for all columns"
+6,Encode Car_Name,"Car_Name_le = LabelEncoder()
+dataset['Car_Name'] = Car_Name_le.fit_transform(dataset['Car_Name'])","Label encode the Car_Name column (text to numbers)"
+7,Check Fuel_Type Unique,"dataset['Fuel_Type'].unique()","Check unique values in Fuel_Type column"
+8,Encode Fuel_Type,"Fuel_Type_le = LabelEncoder()
+dataset['Fuel_Type'] = Car_Name_le.fit_transform(dataset['Fuel_Type'])","Label encode the Fuel_Type column"
+9,Encode Seller_Type,"sellar_type_le = LabelEncoder()
+dataset['Seller_Type'] = sellar_type_le.fit_transform(dataset['Seller_Type'])","Label encode the Seller_Type column"
+10,Encode Transmission,"Transmission_le = LabelEncoder()
+dataset['Transmission'] = Transmission_le.fit_transform(dataset['Transmission'])","Label encode the Transmission column"
+11,Preview Encoded Data,"dataset.head(3)","Show first 3 rows after encoding"
+12,Correlation Heatmap,"sns.heatmap(data=dataset.corr(), annot=True)
+plt.show()","Visualize correlation between all features using heatmap"
+13,Split Input Output,"input_data = dataset.iloc[:,:-1]
+output_data = dataset['Selling_Price']","Separate features (X) and target variable (y)"
+14,Standard Scaling,"from sklearn.preprocessing import StandardScaler
+ss = StandardScaler()
+input_data = pd.DataFrame(ss.fit_transform(input_data), columns=input_data.columns)","Scale all input features to same range using StandardScaler"
+15,Train Test Split,"from sklearn.model_selection import train_test_split
+x_train, x_test, y_train, y_test = train_test_split(input_data, output_data, test_size=0.2, random_state=42)","Split data: 80% training and 20% testing"
+16,Import ML Models,"from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.svm import SVR
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.ensemble import RandomForestRegressor","Import all regression models to be tested"
+17,Train Linear Regression,"lr = LinearRegression()
+lr.fit(x_train, y_train)","Create and train the Linear Regression model"
+18,Evaluate Linear Regression,"lr.score(x_train, y_train)*100, lr.score(x_test, y_test)*100","Get training and testing accuracy scores (R² * 100)"
